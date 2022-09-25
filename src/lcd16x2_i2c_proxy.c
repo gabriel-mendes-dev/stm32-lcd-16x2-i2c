@@ -199,6 +199,18 @@ int32_t lcd16x2_i2c_proxy_turnDisplayOff()
                                          LCD_ON_OFF_CONTROL_BLINK_CURSOR_OFF);
 }
 
+/*
+ */
+int32_t lcd16x2_i2c_proxy_setCursor(bool cursorOn, bool blinking)
+{
+    lcd16x2_i2c_proxy_cursorOn = cursorOn;
+    lcd16x2_i2c_proxy_blinking = blinking;
+    return lcd16x2_i2c_proxy_sendCommand(LCD_COMMAND_ON_OFF_CONTROL |
+                                         LCD_ON_OFF_CONTROL_DISPLAY_ON |
+                                         (lcd16x2_i2c_proxy_cursorOn ? LCD_ON_OFF_CONTROL_CURSOR_ON : LCD_ON_OFF_CONTROL_CURSOR_OFF) |
+                                         (lcd16x2_i2c_proxy_blinking ? LCD_ON_OFF_CONTROL_BLINK_CURSOR_ON : LCD_ON_OFF_CONTROL_BLINK_CURSOR_OFF));
+}
+
 /**
  * @brief Set cursor to first position
  * @param[in] row 0 for first row and 1 for second row
@@ -300,7 +312,27 @@ int32_t lcd16x2_i2c_proxy_printf(const char *str, ...)
         {
             lcd16x2_i2c_proxy_setCursorPosition(1, 0);
         }
-        lcd16x2_i2c_proxy_sendData((uint8_t)stringArray[i]);
+int32_t printToRow(const uint8_t row, const char *str, ...)
+{
+    char formattedStr[33];
+    uint8_t strSize;
+    if(row > 1)
+    {
+        return -1;
+    }
+    va_list args;
+    va_start(args, str);
+    vsprintf(formattedStr, str, args);
+    va_end(args);
+    lcd16x2_i2c_proxy_setCursorPosition(row, 0);
+    strSize = strlen(formattedStr);
+    for (uint8_t i = 0; (i < strSize) && (i < 16); i++)
+    {
+        lcd16x2_i2c_proxy_sendData((uint8_t)formattedStr[i]);
+    }
+    for (int8_t i = 16-strSize; i > 0; i--)
+    {
+        lcd16x2_i2c_proxy_sendData(' ');
     }
     return 0;
 }

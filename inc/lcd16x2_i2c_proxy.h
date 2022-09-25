@@ -24,10 +24,12 @@ int32_t lcd16x2_i2c_proxy_clear();
 int32_t lcd16x2_i2c_proxy_setCursorHome();
 int32_t lcd16x2_i2c_proxy_turnDisplayOff();
 int32_t lcd16x2_i2c_proxy_turnDisplayOn();
+int32_t lcd16x2_i2c_proxy_setCursor(bool cursorOn, bool blinking);
 int32_t lcd16x2_i2c_proxy_scrollLeft(uint8_t offset);
 int32_t lcd16x2_i2c_proxy_scrollRight(uint8_t offset);
 int32_t lcd16x2_i2c_proxy_setCursorPosition(uint8_t row, uint8_t column);
 int32_t lcd16x2_i2c_proxy_printc(char c);
 int32_t lcd16x2_i2c_proxy_printf(const char* str, ...);
+int32_t printToRow(const uint8_t row, const char *str, ...);
 
 #endif /* LCD16X2_I2C_H_ */
