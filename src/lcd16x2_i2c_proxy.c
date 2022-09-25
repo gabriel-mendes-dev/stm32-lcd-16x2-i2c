@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <string.h>
 
 /* LCD 16x2 control pins positions on IO Expander */
@@ -46,9 +47,9 @@
 // used to set cursor position
 
 /* Class variables */
-static I2C_HandleTypeDef *lcd16x2_i2c_proxy_i2cHandle;
-static bool cursorOn = false;
-static bool blinking = false;
+static I2C_HandleTypeDef* lcd16x2_i2c_proxy_pI2cHandle;
+static bool lcd16x2_i2c_proxy_cursorOn = false;
+static bool lcd16x2_i2c_proxy_blinking = false;
 
 /*
  * @brief Send nibble as command (RS = 0) to HD44780. This function is used in the initialization, when
@@ -64,7 +65,7 @@ static int32_t lcd16x2_i2c_proxy_sendCommandNibble(const uint8_t nibbleOnLSN)
             dataD7ToD4 | PCF8574_LCD_BKL_PIN | PCF8574_LCD_EN_PIN,
             dataD7ToD4 | PCF8574_LCD_BKL_PIN,
         };
-    if (HAL_I2C_Master_Transmit(lcd16x2_i2c_proxy_i2cHandle, LCD_I2C_SLAVE_ADDRESS, i2cData, 2, 100) != HAL_OK)
+    if (HAL_I2C_Master_Transmit(lcd16x2_i2c_proxy_pI2cHandle, LCD_I2C_SLAVE_ADDRESS, i2cData, 2, 100) != HAL_OK)
     {
         return -1;
     }
@@ -90,7 +91,7 @@ static int32_t lcd16x2_i2c_proxy_sendCommand(uint8_t command)
             dataD3ToD0 | PCF8574_LCD_BKL_PIN | PCF8574_LCD_EN_PIN,
             dataD3ToD0 | PCF8574_LCD_BKL_PIN,
         };
-    if (HAL_I2C_Master_Transmit(lcd16x2_i2c_proxy_i2cHandle, LCD_I2C_SLAVE_ADDRESS, i2cData, 4, 100) != HAL_OK)
+    if (HAL_I2C_Master_Transmit(lcd16x2_i2c_proxy_pI2cHandle, LCD_I2C_SLAVE_ADDRESS, i2cData, 4, 100) != HAL_OK)
     {
         return -1;
     }
@@ -116,7 +117,7 @@ static int32_t lcd16x2_i2c_proxy_sendData(uint8_t data)
             dataD3ToD0 | PCF8574_LCD_BKL_PIN | PCF8574_LCD_RS_PIN | PCF8574_LCD_EN_PIN,
             dataD3ToD0 | PCF8574_LCD_BKL_PIN | PCF8574_LCD_RS_PIN,
         };
-    if (HAL_I2C_Master_Transmit(lcd16x2_i2c_proxy_i2cHandle, LCD_I2C_SLAVE_ADDRESS, i2cData, 4, 100) != HAL_OK)
+    if (HAL_I2C_Master_Transmit(lcd16x2_i2c_proxy_pI2cHandle, LCD_I2C_SLAVE_ADDRESS, i2cData, 4, 100) != HAL_OK)
     {
         return -1;
     }
@@ -137,11 +138,11 @@ int32_t lcd16x2_i2c_proxy_initialize(I2C_HandleTypeDef *pI2cHandle, bool showCur
 {
     int32_t transmissionResult = 0;
 
-    lcd16x2_i2c_proxy_i2cHandle = pI2cHandle;
-    cursorOn = showCursor;
-    blinking = blinkCursor;
+    lcd16x2_i2c_proxy_pI2cHandle = pI2cHandle;
+    lcd16x2_i2c_proxy_cursorOn = showCursor;
+    lcd16x2_i2c_proxy_blinking = blinkCursor;
 
-    if (HAL_I2C_IsDeviceReady(lcd16x2_i2c_proxy_i2cHandle, LCD_I2C_SLAVE_ADDRESS, 5, 500) != HAL_OK)
+    if (HAL_I2C_IsDeviceReady(lcd16x2_i2c_proxy_pI2cHandle, LCD_I2C_SLAVE_ADDRESS, 5, 500) != HAL_OK)
     {
         return -1;
     }
@@ -161,8 +162,8 @@ int32_t lcd16x2_i2c_proxy_initialize(I2C_HandleTypeDef *pI2cHandle, bool showCur
     HAL_Delay(1);
     transmissionResult |= lcd16x2_i2c_proxy_sendCommand(LCD_COMMAND_ON_OFF_CONTROL |
                                                         LCD_ON_OFF_CONTROL_DISPLAY_ON |
-                                                        (cursorOn ? LCD_ON_OFF_CONTROL_CURSOR_ON : LCD_ON_OFF_CONTROL_CURSOR_OFF) |
-                                                        (blinking ? LCD_ON_OFF_CONTROL_BLINK_CURSOR_ON : LCD_ON_OFF_CONTROL_BLINK_CURSOR_OFF));
+                                                        (lcd16x2_i2c_proxy_cursorOn ? LCD_ON_OFF_CONTROL_CURSOR_ON : LCD_ON_OFF_CONTROL_CURSOR_OFF) |
+                                                        (lcd16x2_i2c_proxy_blinking ? LCD_ON_OFF_CONTROL_BLINK_CURSOR_ON : LCD_ON_OFF_CONTROL_BLINK_CURSOR_OFF));
     HAL_Delay(1);
     transmissionResult |= lcd16x2_i2c_proxy_sendCommand(LCD_COMMAND_CLEAR);
     HAL_Delay(1);
@@ -182,8 +183,8 @@ int32_t lcd16x2_i2c_proxy_turnDisplayOn()
 {
     return lcd16x2_i2c_proxy_sendCommand(LCD_COMMAND_ON_OFF_CONTROL |
                                          LCD_ON_OFF_CONTROL_DISPLAY_ON |
-                                         (cursorOn ? LCD_ON_OFF_CONTROL_CURSOR_ON : LCD_ON_OFF_CONTROL_CURSOR_OFF) |
-                                         (blinking ? LCD_ON_OFF_CONTROL_BLINK_CURSOR_ON : LCD_ON_OFF_CONTROL_BLINK_CURSOR_OFF));
+                                         (lcd16x2_i2c_proxy_cursorOn ? LCD_ON_OFF_CONTROL_CURSOR_ON : LCD_ON_OFF_CONTROL_CURSOR_OFF) |
+                                         (lcd16x2_i2c_proxy_blinking ? LCD_ON_OFF_CONTROL_BLINK_CURSOR_ON : LCD_ON_OFF_CONTROL_BLINK_CURSOR_OFF));
 }
 
 /*
