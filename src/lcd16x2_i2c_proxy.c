@@ -295,23 +295,36 @@ int32_t lcd16x2_i2c_proxy_printc(char c)
  */
 int32_t lcd16x2_i2c_proxy_printf(const char *str, ...)
 {
-    char stringArray[33];
+    char formattedStr[33];
+    bool secondLine = false;
     va_list args;
     va_start(args, str);
-    vsprintf(stringArray, str, args);
+    vsprintf(formattedStr, str, args);
     va_end(args);
-    for (uint8_t i = 0; i < strlen(stringArray) && (i < 32); i++)
+    lcd16x2_i2c_proxy_clear();
+    lcd16x2_i2c_proxy_setCursorPosition(0, 0);
+    for (uint8_t i = 0; (i < strlen(formattedStr)) && (i < 32); i++)
     {
         HAL_Delay(1);
-        if (stringArray[i] == '\n')
+        if(!secondLine)
         {
-            lcd16x2_i2c_proxy_setCursorPosition(1, 0);
-            continue;
+            if (formattedStr[i] == '\n')
+            {
+                secondLine = true;
+                lcd16x2_i2c_proxy_setCursorPosition(1, 0);
+                continue;
+            }
+            else if (i == 16)
+            {
+                secondLine = true;
+                lcd16x2_i2c_proxy_setCursorPosition(1, 0);
+            }
         }
-        else if (i == 16)
-        {
-            lcd16x2_i2c_proxy_setCursorPosition(1, 0);
-        }
+        lcd16x2_i2c_proxy_sendData((uint8_t)formattedStr[i]);
+    }
+    return 0;
+}
+
 int32_t printToRow(const uint8_t row, const char *str, ...)
 {
     char formattedStr[33];
